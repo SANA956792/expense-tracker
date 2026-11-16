@@ -1,16 +1,12 @@
-const CACHE_NAME = 'my-expenses-static-pwa-v9';
+const CACHE_NAME = 'my-expenses-static-pwa-v10';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './manifest.json',
-  './favicon.png',
-  './pwa-192x192.png',
-  './pwa-512x512.png',
-  './pwa-maskable-512x512.png',
-  './apple-touch-icon.png',
-  './assets/aistudio/sana-wallet-512_aed371d8.png'
+  './sanas-wallet-192.png',
+  './sanas-wallet-512.png'
 ];
 
 self.addEventListener('install', (event) => {

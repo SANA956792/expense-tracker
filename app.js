@@ -2511,7 +2511,7 @@ function setupPWA() {
   if ('caches' in window) {
     caches.keys().then((keys) => {
       keys.forEach((k) => {
-        if (k !== 'my-expenses-static-pwa-v9') {
+        if (k !== 'my-expenses-static-pwa-v10') {
           caches.delete(k).catch(() => {});
         }
       });
