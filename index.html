@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en-IN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>💰 My Expenses — Personal PWA Expense Tracker</title>
+    <meta name="description" content="Mobile-first, offline-capable static personal expense and credit tracker PWA in Indian Rupees (₹) with monthly budget tracking and local browser storage (IndexedDB + localStorage)." />
+    <meta property="og:title" content="💰 My Expenses — Personal PWA Expense Tracker" />
+    <meta property="og:description" content="Mobile-first, offline-capable static personal expense and credit tracker PWA in Indian Rupees (₹) with monthly budget tracking and local browser storage (IndexedDB + localStorage)." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#7c3aed" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Expenses" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Main Mobile-First Container (max-width 480px) -->
+    <main class="app-container" id="app-root">
+      <!-- 1. Title & Header -->
+      <header class="app-header">
+        <div class="header-top-row">
+          <h1 class="app-title">💰 My Expenses</h1>
+          <div class="header-actions">
+            <button type="button" id="btn-install-pwa" class="btn-install hidden" aria-label="Install App">
+              📲 Install
+            </button>
+            <button type="button" id="btn-ios-install" class="btn-install hidden" aria-label="Install on iOS">
+              📲 Install
+            </button>
+          </div>
+        </div>
+
+        <!-- Status / Saved / Error / Offline Banner -->
+        <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite">
+          <span id="status-banner-text"></span>
+        </div>
+      </header>
+
+      <!-- Top Page Tab Bar (Visible at the top at all times, synced with horizontal swipe) -->
+      <nav class="page-tabs-bar" role="tablist" aria-label="Switch between Expenses and Credits">
+        <button
+          type="button"
+          role="tab"
+          id="page-tab-expenses"
+          class="page-tab-btn active"
+          data-page="expenses"
+          aria-selected="true"
+        >
+          💸 Expenses
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="page-tab-credits"
+          class="page-tab-btn"
+          data-page="credits"
+          aria-selected="false"
+        >
+          💰 Credits
+        </button>
+      </nav>
+
+      <!-- Horizontal CSS Scroll-Snap Swipe Viewport -->
+      <div class="swipe-viewport" id="swipe-viewport">
+        <!-- ========================================== -->
+        <!-- PAGE 1: 💸 EXPENSES                        -->
+        <!-- ========================================== -->
+        <div class="swipe-page" id="page-expenses" data-page="expenses">
+          <!-- CHANGE 1: Monthly Budget Box (Single box at the top of Expenses dashboard) -->
+          <section class="card budget-card" id="monthly-budget-card" aria-label="Monthly Budget">
+            <div id="budget-display-area" class="budget-display-area" role="button" tabindex="0" aria-label="Tap to set or change this month's budget">
+              <div class="budget-header-row">
+                <span class="budget-title-label" id="budget-month-title">This Month's Budget</span>
+                <span class="budget-edit-hint" id="budget-edit-hint">✎ Tap to edit</span>
+              </div>
+
+              <!-- State A: No budget set for this month -->
+              <div id="budget-unset-view" class="budget-unset-view">
+                <strong class="budget-unset-cta">Set this month's budget</strong>
+                <span class="budget-unset-sub">Tap here to enter your monthly spending limit in ₹</span>
+              </div>
+
+              <!-- State B: Budget is set for this month -->
+              <div id="budget-active-view" class="budget-active-view hidden">
+                <div class="budget-metrics-row">
+                  <div class="budget-metric">
+                    <span class="budget-metric-label">Budget</span>
+                    <strong class="budget-metric-val" id="budget-val-limit">₹0</strong>
+                  </div>
+                  <div class="budget-metric budget-metric-right">
+                    <span class="budget-metric-label">Spent this month</span>
+                    <strong class="budget-metric-val" id="budget-val-spent">₹0</strong>
+                  </div>
+                </div>
+
+                <div class="budget-progress-wrap">
+                  <div class="budget-progress-track">
+                    <div id="budget-progress-fill" class="budget-progress-fill" style="width: 0%;"></div>
+                  </div>
+                  <span id="budget-percent-label" class="budget-percent-label">0% used</span>
+                </div>
+
+                <div id="budget-status-line" class="budget-status-line savings">
+                  💰 Savings: ₹0
+                </div>
+              </div>
+            </div>
+
+            <!-- Inline Budget Editor (Opens when tapping the budget box) -->
+            <form id="budget-edit-form" class="budget-edit-form hidden" novalidate>
+              <label for="budget-input" class="field-label" id="budget-input-label">Set monthly budget (₹)</label>
+              <div class="budget-input-row">
+                <div class="amount-input-wrapper budget-amount-wrapper">
+                  <span class="currency-prefix" aria-hidden="true">₹</span>
+                  <input
+                    type="number"
+                    id="budget-input"
+                    class="amount-input budget-amount-input"
+                    inputmode="decimal"
+                    step="1"
+                    min="0"
+                    placeholder="0"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+              <div class="inline-category-actions">
+                <button type="submit" class="btn-secondary btn-accent">Save Budget</button>
+                <button type="button" id="btn-clear-budget" class="btn-secondary">Clear</button>
+                <button type="button" id="btn-cancel-budget" class="btn-secondary">Cancel</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- 2. Summary Card: Today, This Month -->
+          <section class="card summary-card" aria-label="Spending Summary">
+            <div class="summary-grid-4">
+              <div class="summary-cell">
+                <span class="summary-label">Today</span>
+                <strong class="summary-value" id="summary-today">₹0</strong>
+              </div>
+              <div class="summary-cell">
+                <span class="summary-label">This month</span>
+                <strong class="summary-value summary-accent" id="summary-month">₹0</strong>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. Entry Card -->
+          <section class="card entry-card" aria-label="Add New Expense">
+            <form id="expense-form" novalidate>
+              <div class="field-group">
+                <label for="expense-amount" class="field-label">Amount (₹)</label>
+                <div class="amount-input-wrapper">
+                  <span class="currency-prefix" aria-hidden="true">₹</span>
+                  <input
+                    type="number"
+                    id="expense-amount"
+                    class="amount-input"
+                    inputmode="decimal"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0"
+                    required
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="expense-reason" class="field-label">Reason</label>
+                <input
+                  type="text"
+                  id="expense-reason"
+                  class="text-input"
+                  maxlength="160"
+                  placeholder="What was this for? (e.g., Chai, Auto rickshaw, Lunch)"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="field-group">
+                <div class="field-label-row">
+                  <span class="field-label">Category</span>
+                  <span class="selected-category-indicator" id="selected-category-label">🍔 Food</span>
+                </div>
+
+                <!-- Emoji Category Grid -->
+                <div class="category-grid" id="category-grid" role="radiogroup" aria-label="Select Category">
+                  <!-- Populated by app.js -->
+                </div>
+
+                <!-- Inline "+ New" Category Form -->
+                <div id="new-category-form" class="inline-category-form hidden">
+                  <div class="inline-category-inputs">
+                    <input
+                      type="text"
+                      id="new-cat-emoji"
+                      class="emoji-input"
+                      maxlength="8"
+                      placeholder="✨"
+                      aria-label="Category Emoji"
+                    />
+                    <input
+                      type="text"
+                      id="new-cat-name"
+                      class="text-input"
+                      maxlength="36"
+                      placeholder="Category name (e.g., Chai, Rent)"
+                      aria-label="Category Name"
+                    />
+                  </div>
+                  <div class="emoji-quick-picks" aria-label="Quick Emoji Suggestions">
+                    <button type="button" class="emoji-pick-btn" data-emoji="☕">☕</button>
+                    <button type="button" class="emoji-pick-btn" data-emoji="🛺">🛺</button>
+                    <button type="button" class="emoji-pick-btn" data-emoji="🏠">🏠</button>
+                    <button type="button" class="emoji-pick-btn" data-emoji="🎁">🎁</button>
+                    <button type="button" class="emoji-pick-btn" data-emoji="📚">📚</button>
+                    <button type="button" class="emoji-pick-btn" data-emoji="🏋️">🏋️</button>
+                    <button type="button" class="emoji-pick-btn" data-emoji="🐶">🐶</button>
+                    <button type="button" class="emoji-pick-btn" data-emoji="✈️">✈️</button>
+                  </div>
+                  <div class="inline-category-actions">
+                    <button type="button" id="btn-add-category" class="btn-secondary btn-accent">Add</button>
+                    <button type="button" id="btn-cancel-category" class="btn-secondary">Cancel</button>
+                  </div>
+                  <p id="category-form-msg" class="form-feedback error hidden" role="alert"></p>
+                </div>
+              </div>
+
+              <p id="entry-error-msg" class="form-feedback error hidden" role="alert"></p>
+
+              <div class="save-button-row">
+                <button type="submit" id="btn-save-expense" class="btn-primary-save">
+                  <span id="save-btn-text">Save expense</span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- 4. Dashboard Card: Day | Month | Year Tabs -->
+          <section class="card dashboard-card" aria-label="Spending Dashboard">
+            <div class="tabs-bar" id="expense-dash-tabs" role="tablist" aria-label="Expense Dashboard Period Tabs">
+              <button type="button" role="tab" class="tab-btn exp-tab-btn" data-tab="day" aria-selected="false">Day</button>
+              <button type="button" role="tab" class="tab-btn exp-tab-btn active" data-tab="month" aria-selected="true">Month</button>
+              <button type="button" role="tab" class="tab-btn exp-tab-btn" data-tab="year" aria-selected="false">Year</button>
+            </div>
+
+            <!-- Period Navigator (Prev / Selector / Next) -->
+            <div class="period-nav">
+              <button type="button" id="btn-period-prev" class="period-arrow-btn" aria-label="Previous period">◀</button>
+              <div class="period-center">
+                <span id="period-display-label" class="period-label-text">November 2026</span>
+                <input type="date" id="dashboard-day-picker" class="period-date-input hidden" aria-label="Choose date" />
+              </div>
+              <button type="button" id="btn-period-next" class="period-arrow-btn" aria-label="Next period">▶</button>
+            </div>
+
+            <!-- Period Comparison Banner -->
+            <div id="period-comparison" class="comparison-banner">
+              <!-- Populated dynamically -->
+            </div>
+
+            <!-- 4 KPI Stats for Selected Period -->
+            <div class="dashboard-kpis">
+              <div class="kpi-box">
+                <span class="kpi-label">Total spent</span>
+                <strong class="kpi-value" id="dash-total-spent">₹0</strong>
+              </div>
+              <div class="kpi-box">
+                <span class="kpi-label">Expenses</span>
+                <strong class="kpi-value" id="dash-expense-count">0</strong>
+              </div>
+              <div class="kpi-box">
+                <span class="kpi-label">Average / day</span>
+                <strong class="kpi-value" id="dash-avg-day">₹0</strong>
+              </div>
+              <div class="kpi-box">
+                <span class="kpi-label">Highest category</span>
+                <strong class="kpi-value kpi-value-cat" id="dash-top-category">—</strong>
+              </div>
+            </div>
+
+            <hr class="card-divider" />
+
+            <!-- Period Breakdown Chart -->
+            <div class="dashboard-block">
+              <div class="section-header-row">
+                <h2 class="section-title" id="dash-chart-title">Daily totals this month</h2>
+                <span class="section-caption" id="dash-chart-subtitle"></span>
+              </div>
+              <div id="dash-chart-container" class="chart-wrapper">
+                <!-- Rendered with plain HTML/CSS & inline SVG -->
+              </div>
+            </div>
+
+            <hr class="card-divider" />
+
+            <!-- By Category Progress Bars -->
+            <div class="dashboard-block">
+              <h2 class="section-title">By category</h2>
+              <div id="category-progress-list" class="progress-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </section>
+
+          <!-- 5. Expense List Card -->
+          <section class="card list-card" aria-label="Expense List">
+            <div class="section-header-row">
+              <h2 class="section-title">Expenses</h2>
+              <span class="expense-count-label" id="expense-count-label">0 items</span>
+            </div>
+
+            <!-- Filters: Day/Month/Year Filter, Category Filter, Search Box -->
+            <div class="filters-container">
+              <div class="filters-row">
+                <div class="filter-col">
+                  <label for="list-filter-period-type" class="sr-only">Date filter mode</label>
+                  <select id="list-filter-period-type" class="select-input">
+                    <option value="all">All dates</option>
+                    <option value="day">Filter by Day</option>
+                    <option value="month">Filter by Month</option>
+                    <option value="year">Filter by Year</option>
+                  </select>
+                </div>
+                <div class="filter-col">
+                  <label for="filter-category" class="sr-only">Filter by category</label>
+                  <select id="filter-category" class="select-input">
+                    <option value="all">All categories</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Dynamic Date/Month/Year value selector -->
+              <div id="list-period-value-row" class="filter-period-value-row hidden">
+                <input type="date" id="list-filter-day" class="text-input hidden" aria-label="Filter day" />
+                <input type="month" id="list-filter-month" class="text-input hidden" aria-label="Filter month" />
+                <select id="list-filter-year" class="select-input hidden" aria-label="Filter year"></select>
+              </div>
+
+              <div class="search-row">
+                <input
+                  type="search"
+                  id="filter-search"
+                  class="text-input search-input"
+                  placeholder="🔍 Search reason, category, or ₹ amount..."
+                  aria-label="Search expenses"
+                />
+                <button type="button" id="btn-reset-filters" class="btn-text-reset hidden">Reset</button>
+              </div>
+            </div>
+
+            <!-- Expense List Items -->
+            <div id="expense-list" class="expense-list">
+              <!-- Populated dynamically -->
+            </div>
+          </section>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PAGE 2: 💰 CREDITS                         -->
+        <!-- ========================================== -->
+        <div class="swipe-page" id="page-credits" data-page="credits">
+          <!-- 1. Credits Summary Card -->
+          <section class="card credits-summary-card" aria-label="Credits Summary">
+            <div class="credits-summary-top">
+              <span class="summary-label">Total credits this month</span>
+              <strong class="credits-month-total" id="credits-month-total">₹0</strong>
+            </div>
+            <div class="credits-net-line" id="credits-net-line">
+              Credits − Expenses this month = ₹0
+            </div>
+          </section>
+
+          <!-- 2. Add Credit Card -->
+          <section class="card entry-card" aria-label="Add Credit">
+            <form id="credit-form" novalidate>
+              <div class="field-group">
+                <label for="credit-amount" class="field-label">Amount (₹)</label>
+                <div class="amount-input-wrapper">
+                  <span class="currency-prefix" aria-hidden="true">₹</span>
+                  <input
+                    type="number"
+                    id="credit-amount"
+                    class="amount-input"
+                    inputmode="decimal"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0"
+                    required
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="credit-note" class="field-label">Note</label>
+                <input
+                  type="text"
+                  id="credit-note"
+                  class="text-input"
+                  maxlength="160"
+                  placeholder="Salary, Freelance, Gift, Refund..."
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="field-group">
+                <div class="field-label-row">
+                  <span class="field-label">Source</span>
+                  <span class="selected-category-indicator" id="selected-source-label">💼 Salary</span>
+                </div>
+
+                <!-- Emoji Source Grid -->
+                <div class="category-grid" id="source-grid" role="radiogroup" aria-label="Select Credit Source">
+                  <!-- Populated by app.js -->
+                </div>
+
+                <!-- Inline "+ New" Source Form -->
+                <div id="new-source-form" class="inline-category-form hidden">
+                  <div class="inline-category-inputs">
+                    <input
+                      type="text"
+                      id="new-source-emoji"
+                      class="emoji-input"
+                      maxlength="8"
+                      placeholder="✨"
+                      aria-label="Source Emoji"
+                    />
+                    <input
+                      type="text"
+                      id="new-source-name"
+                      class="text-input"
+                      maxlength="36"
+                      placeholder="Source name (e.g., Freelance, Bonus)"
+                      aria-label="Source Name"
+                    />
+                  </div>
+                  <div class="emoji-quick-picks" aria-label="Quick Source Emoji Suggestions">
+                    <button type="button" class="source-emoji-pick-btn emoji-pick-btn" data-emoji="💻">💻</button>
+                    <button type="button" class="source-emoji-pick-btn emoji-pick-btn" data-emoji="📈">📈</button>
+                    <button type="button" class="source-emoji-pick-btn emoji-pick-btn" data-emoji="🏆">🏆</button>
+                    <button type="button" class="source-emoji-pick-btn emoji-pick-btn" data-emoji="🏠">🏠</button>
+                    <button type="button" class="source-emoji-pick-btn emoji-pick-btn" data-emoji="🤝">🤝</button>
+                    <button type="button" class="source-emoji-pick-btn emoji-pick-btn" data-emoji="🪙">🪙</button>
+                  </div>
+                  <div class="inline-category-actions">
+                    <button type="button" id="btn-add-source" class="btn-secondary btn-accent">Add</button>
+                    <button type="button" id="btn-cancel-source" class="btn-secondary">Cancel</button>
+                  </div>
+                  <p id="source-form-msg" class="form-feedback error hidden" role="alert"></p>
+                </div>
+              </div>
+
+              <p id="credit-error-msg" class="form-feedback error hidden" role="alert"></p>
+
+              <div class="save-button-row">
+                <button type="submit" id="btn-save-credit" class="btn-primary-save btn-save-credit-green">
+                  <span id="save-credit-btn-text">Add credit</span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- 3. Credits Dashboard Card: Day | Month | Year -->
+          <section class="card dashboard-card" aria-label="Credits Dashboard">
+            <div class="tabs-bar" id="credit-dash-tabs" role="tablist" aria-label="Credits Dashboard Period Tabs">
+              <button type="button" role="tab" class="tab-btn cred-tab-btn" data-tab="day" aria-selected="false">Day</button>
+              <button type="button" role="tab" class="tab-btn cred-tab-btn active" data-tab="month" aria-selected="true">Month</button>
+              <button type="button" role="tab" class="tab-btn cred-tab-btn" data-tab="year" aria-selected="false">Year</button>
+            </div>
+
+            <!-- Credits Period Navigator -->
+            <div class="period-nav">
+              <button type="button" id="btn-credit-period-prev" class="period-arrow-btn" aria-label="Previous period">◀</button>
+              <div class="period-center">
+                <span id="credit-period-display-label" class="period-label-text">November 2026</span>
+                <input type="date" id="credit-dashboard-day-picker" class="period-date-input hidden" aria-label="Choose date" />
+              </div>
+              <button type="button" id="btn-credit-period-next" class="period-arrow-btn" aria-label="Next period">▶</button>
+            </div>
+
+            <!-- Credits Period Summary KPIs -->
+            <div class="dashboard-kpis">
+              <div class="kpi-box">
+                <span class="kpi-label">Total received</span>
+                <strong class="kpi-value kpi-green" id="cred-dash-total">₹0</strong>
+              </div>
+              <div class="kpi-box">
+                <span class="kpi-label">Credits count</span>
+                <strong class="kpi-value" id="cred-dash-count">0</strong>
+              </div>
+            </div>
+
+            <hr class="card-divider" />
+
+            <!-- By Source Progress Bars -->
+            <div class="dashboard-block">
+              <h2 class="section-title">By source</h2>
+              <div id="credit-source-progress-list" class="progress-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </section>
+
+          <!-- 4. Credit List Card -->
+          <section class="card list-card" aria-label="Credit History">
+            <div class="section-header-row">
+              <h2 class="section-title">Credits</h2>
+              <span class="expense-count-label" id="credit-count-label">0 items</span>
+            </div>
+            <div id="credit-list" class="expense-list">
+              <!-- Populated dynamically -->
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- 6. Shared Backup Card -->
+      <section class="card backup-card" aria-label="Backup and Storage">
+        <div class="section-header-row">
+          <h2 class="section-title">Backup &amp; Data</h2>
+          <span id="storage-persist-badge" class="storage-status-text">Checking storage...</span>
+        </div>
+        <p class="section-subtitle">
+          All data is stored privately on your phone in this browser. Back up regularly to keep a copy safe.
+        </p>
+
+        <!-- 30-Day Backup Reminder -->
+        <div id="backup-reminder-banner" class="backup-reminder hidden" role="alert">
+          <span>⚠️ No backup has been made in the last 30 days. Tap "Download backup" below to save a copy.</span>
+        </div>
+
+        <div class="backup-buttons-grid">
+          <button type="button" id="btn-copy-csv" class="btn-action">
+            📋 Copy as CSV
+          </button>
+          <button type="button" id="btn-download-backup" class="btn-action">
+            💾 Download backup
+          </button>
+          <input type="file" id="restore-file-input" accept=".json,application/json" class="hidden" />
+          <button type="button" id="btn-restore-backup" class="btn-action">
+            📂 Restore backup
+          </button>
+          <button type="button" id="btn-clear-all" class="btn-action btn-danger">
+            🗑️ Clear all
+          </button>
+        </div>
+        <p id="last-backup-info" class="backup-meta-text"></p>
+      </section>
+    </main>
+
+    <!-- Budget Crossed Alert Popup Modal -->
+    <div id="budget-crossed-modal" class="modal-backdrop hidden" role="alertdialog" aria-modal="true" aria-labelledby="budget-crossed-title">
+      <div class="modal-card modal-card-danger">
+        <h2 id="budget-crossed-title" class="modal-title modal-title-danger">Budget Limit Crossed</h2>
+        <p id="budget-crossed-message" class="modal-desc modal-desc-strong">
+          ⚠️ You crossed your monthly budget by ₹0
+        </p>
+        <div class="modal-actions">
+          <button type="button" id="btn-close-budget-alert" class="btn-primary-save btn-danger-solid">
+            OK, Got It
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Expense Modal -->
+    <div id="edit-expense-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+      <div class="modal-card">
+        <h2 id="edit-modal-title" class="modal-title">Edit Expense</h2>
+        <form id="edit-expense-form" novalidate>
+          <input type="hidden" id="edit-expense-id" />
+          <div class="field-group">
+            <label for="edit-expense-amount" class="field-label">Amount (₹)</label>
+            <input
+              type="number"
+              id="edit-expense-amount"
+              class="text-input"
+              inputmode="decimal"
+              step="0.01"
+              min="0.01"
+              required
+            />
+          </div>
+          <div class="field-group">
+            <label for="edit-expense-reason" class="field-label">Reason</label>
+            <input
+              type="text"
+              id="edit-expense-reason"
+              class="text-input"
+              maxlength="160"
+            />
+          </div>
+          <div class="field-group">
+            <label for="edit-expense-category" class="field-label">Category</label>
+            <select id="edit-expense-category" class="select-input"></select>
+          </div>
+          <div class="field-group">
+            <label for="edit-expense-datetime" class="field-label">Date &amp; Time</label>
+            <input type="datetime-local" id="edit-expense-datetime" class="text-input" />
+          </div>
+          <p id="edit-error-msg" class="form-feedback error hidden"></p>
+          <div class="modal-actions-row">
+            <button type="button" id="btn-cancel-edit" class="btn-secondary">Cancel</button>
+            <button type="submit" class="btn-secondary btn-accent">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Credit Modal -->
+    <div id="edit-credit-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="edit-credit-modal-title">
+      <div class="modal-card">
+        <h2 id="edit-credit-modal-title" class="modal-title">Edit Credit</h2>
+        <form id="edit-credit-form" novalidate>
+          <input type="hidden" id="edit-credit-id" />
+          <div class="field-group">
+            <label for="edit-credit-amount" class="field-label">Amount (₹)</label>
+            <input
+              type="number"
+              id="edit-credit-amount"
+              class="text-input"
+              inputmode="decimal"
+              step="0.01"
+              min="0.01"
+              required
+            />
+          </div>
+          <div class="field-group">
+            <label for="edit-credit-note" class="field-label">Note</label>
+            <input
+              type="text"
+              id="edit-credit-note"
+              class="text-input"
+              maxlength="160"
+            />
+          </div>
+          <div class="field-group">
+            <label for="edit-credit-source" class="field-label">Source</label>
+            <select id="edit-credit-source" class="select-input"></select>
+          </div>
+          <div class="field-group">
+            <label for="edit-credit-datetime" class="field-label">Date &amp; Time</label>
+            <input type="datetime-local" id="edit-credit-datetime" class="text-input" />
+          </div>
+          <p id="edit-credit-error-msg" class="form-feedback error hidden"></p>
+          <div class="modal-actions-row">
+            <button type="button" id="btn-cancel-credit-edit" class="btn-secondary">Cancel</button>
+            <button type="submit" class="btn-secondary btn-accent">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Clear All Confirmation Modal -->
+    <div id="confirm-clear-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-clear-title">
+      <div class="modal-card">
+        <h2 id="confirm-clear-title" class="modal-title">Clear All Data?</h2>
+        <p class="modal-desc">
+          This will permanently delete all expenses, credits, budgets, and custom categories on this device. Consider downloading a backup first.
+        </p>
+        <div class="modal-actions-row">
+          <button type="button" id="btn-cancel-clear" class="btn-secondary">Cancel</button>
+          <button type="button" id="btn-confirm-clear" class="btn-secondary btn-danger-solid">Yes, Clear All</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- iOS Install Guide Modal -->
+    <div id="ios-guide-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="ios-guide-title">
+      <div class="modal-card">
+        <h2 id="ios-guide-title" class="modal-title">Add to Home Screen</h2>
+        <p class="modal-desc">
+          1. Tap the <strong>Share</strong> icon in your browser bar.<br />
+          2. Select <strong>Add to Home Screen</strong>.
+        </p>
+        <div class="modal-actions">
+          <button type="button" id="btn-close-ios-guide" class="btn-secondary">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "💰 My Expenses — Personal PWA Expense Tracker",
+  "description": "Mobile-first, offline-capable static personal expense and credit tracker PWA in Indian Rupees (₹) with monthly budget tracking and local browser storage (IndexedDB + localStorage).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
