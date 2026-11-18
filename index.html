@@ -2,38 +2,38 @@
 <html lang="en-IN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>💰 My Expenses — Personal PWA Expense Tracker</title>
     <meta name="description" content="Mobile-first, offline-capable static personal expense and credit tracker PWA in Indian Rupees (₹) with monthly budget tracking and local browser storage (IndexedDB + localStorage)." />
     <meta property="og:title" content="💰 My Expenses — Personal PWA Expense Tracker" />
     <meta property="og:description" content="Mobile-first, offline-capable static personal expense and credit tracker PWA in Indian Rupees (₹) with monthly budget tracking and local browser storage (IndexedDB + localStorage)." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="theme-color" content="#7c3aed" />
-    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0F1117" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ExpenseRecord" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Sana's Wallet" />
-    <link rel="manifest" href="manifest.json" />
-    <link rel="icon" type="image/png" href="sanas-wallet-192.png" />
-    <link rel="apple-touch-icon" href="sanas-wallet-192.png" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <!-- Main Mobile-First Container (max-width 480px) -->
     <main class="app-container" id="app-root">
-      <!-- 1. Title & Header -->
+      <!-- 1. Title & Header (Mobile Top Bar & Sidebar Header Brand) -->
       <header class="app-header">
         <div class="header-top-row">
           <div class="header-brand">
             <img
-              src="sanas-wallet-192.png"
-              alt="Sana's Wallet Logo"
+              src="/icon-192.png"
+              alt="ExpenseRecord Logo"
               class="app-logo"
               width="40"
               height="40"
             />
-            <h1 class="app-title">💰 My Expenses</h1>
+            <h1 class="app-title">ExpenseRecord</h1>
           </div>
           <div class="header-actions">
             <button type="button" id="btn-install-pwa" class="btn-install hidden" aria-label="Install App">
@@ -697,6 +697,6 @@
       </div>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <script type="module" src="/app.js"></script>
   </body>
 </html>

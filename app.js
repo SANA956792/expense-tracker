@@ -2511,7 +2511,7 @@ function setupPWA() {
   if ('caches' in window) {
     caches.keys().then((keys) => {
       keys.forEach((k) => {
-        if (k !== 'my-expenses-static-pwa-v10') {
+        if (k !== 'my-expenses-static-pwa-v11') {
           caches.delete(k).catch(() => {});
         }
       });
@@ -2521,7 +2521,7 @@ function setupPWA() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
-        .register('./sw.js')
+        .register('/sw.js')
         .then((reg) => {
           reg.update().catch(() => {});
         })

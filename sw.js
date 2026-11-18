@@ -1,12 +1,15 @@
-const CACHE_NAME = 'my-expenses-static-pwa-v10';
+const CACHE_NAME = 'my-expenses-static-pwa-v11';
 const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './styles.css',
-  './app.js',
-  './manifest.json',
-  './sanas-wallet-192.png',
-  './sanas-wallet-512.png'
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/app.js',
+  '/manifest.json',
+  '/favicon.svg',
+  '/apple-touch-icon.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -50,7 +53,7 @@ self.addEventListener('fetch', (event) => {
         return caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
           if (request.mode === 'navigate') {
-            return caches.match('./index.html', { ignoreSearch: true });
+            return caches.match('/index.html', { ignoreSearch: true });
           }
           return cachedResponse;
         });
